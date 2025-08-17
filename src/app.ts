@@ -1,64 +1,23 @@
-import dotenv from "dotenv";
-dotenv.config();
-import cors from "cors";
-import express, { Application, Request, Response, NextFunction } from "express";
-import logger from "./utils/logger";
-import mainRouter from "./routers"; 
-import ApiError from "./utils/apiError";
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import mainRouter from './routers';
 import passport from 'passport';
-import './configs/passport'; 
+import './config/passport'; 
 
-const PORT: string = process.env.PORT || "2020";
+dotenv.config();
 
-class App {
-    public app: Application;
+const app = express();
 
-    constructor() {
-        this.app = express();
-        this.configure();
-        this.routes();
-        this.errorHandler();
-    }
+app.use(cors());
+app.use(express.json());
 
-    private configure(): void {
-        this.app.use(cors());
-        this.app.use(express.json());
-        this.app.use(express.urlencoded({ extended: true }));
-        this.app.use(passport.initialize()); 
-    }
+app.use(passport.initialize()); 
 
-    private routes(): void {
-        this.app.get("/", (req: Request, res: Response) => {
-            res.status(200).send("<h1>Welcome to Final Project Grand Lodge</h1>");
-        });
+app.use('/api', mainRouter);
 
-        this.app.use("/api", mainRouter); 
-    }
+app.get('/', (req, res) => {
+  res.send('Grand Lodge Web App API');
+});
 
-    private errorHandler(): void {
-        this.app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-            logger.error(
-                `${req.method} ${req.path}: ${error.message} ${JSON.stringify(error)}`
-            );
-            if (error instanceof ApiError) {
-                res.status(error.statusCode).json({
-                    success: false,
-                    error: error.message,
-                });
-            } else {
-                res.status(500).json({
-                    success: false,
-                    error: "Internal Server Error",
-                });
-            }
-        });
-    }
-
-    public start(): void {
-        this.app.listen(PORT, () => {
-            console.log(`Server is Running on http://localhost:${PORT}`);
-        });
-    }
-}
-
-export default App;
+export default app;

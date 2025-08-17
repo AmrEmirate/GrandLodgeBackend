@@ -1,16 +1,14 @@
 import { Router } from 'express';
-import authRouter from './authRouter';
-import userRouter from './userRouter';
-import tenantRouter from './tenantRouter'; 
-import transactionRouter from './transactionRouter';
-import propertyRouter from './propertyRouter';
+import authRouter from './auth.router';
+import propertyRouter from './property.router';
+import userRouter from './user.router';
+import categoryRouter from './category.router';
 
 const router = Router();
 
 router.use('/auth', authRouter);
-router.use('/users', userRouter);
-router.use('/tenants', tenantRouter); 
-router.use('/transactions', transactionRouter); 
 router.use('/properties', propertyRouter);
+router.use('/user', userRouter);
+router.use('/categories', categoryRouter); 
 
 export default router;

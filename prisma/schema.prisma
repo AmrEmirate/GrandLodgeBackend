@@ -1,5 +1,3 @@
-// This is your Prisma schema file for Stazy App
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,167 +8,193 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// --- ENUMS ---
 enum UserRole {
-  USER
   TENANT
+  USER
 }
 
-enum TransactionStatus {
+enum BookingStatus {
   MENUNGGU_PEMBAYARAN
   MENUNGGU_KONFIRMASI
-  DIKONFIRMASI
+  DIPROSES
   DIBATALKAN
   SELESAI
 }
 
-enum PriceType {
-  NOMINAL
-  PERSENTASE
+enum BedOption {
+  SINGLE
+  DOUBLE
+  TWIN
 }
 
-enum AvailabilityStatus {
-  AVAILABLE
-  UNAVAILABLE
+enum RoomCategory {
+  STANDARD
+  DELUXE
+  SUITE
 }
 
-// --- MODELS ---
-model Account {
-  id              String    @id @default(uuid())
-  name            String
-  email           String    @unique
-  password        String
-  profilePicture  String?
-  role            UserRole  @default(USER)
-  isVerified      Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  properties          Property[]
-  transactions        Transaction[]
-  reviews             Review[]
-  verificationTokens  VerificationToken[]
-  passwordResetTokens PasswordResetToken[]
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }
 
-model PropertyCategory {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+model User {
+  id             Int        @id @default(autoincrement())
+  role           UserRole
+  fullName       String
+  email          String     @unique
+  password       String?
+  profilePicture String?
+  provider       String?
+  providerId     String?
+  verified       Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  tenant         Tenant?
+  bookings       Booking[]
+  reviews        Review[]
+  tokens         Token[]
+  @@unique([provider, providerId])
+}
 
-  properties  Property[]
+model Tenant {
+  id                 Int        @id @default(autoincrement())
+  userId             Int        @unique
+  companyName        String
+  addressCompany     String
+  phoneNumberCompany String
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  user               User       @relation(fields: [userId], references: [id])
+  properties         Property[]
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  properties Property[]
 }
 
 model Property {
-  id          Int      @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
+  tenantId    Int
   name        String
-  description String   @db.Text
-  city        String
-  picture     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  tenantId    String
-  tenant      Account  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
   categoryId  Int
-  category    PropertyCategory @relation(fields: [categoryId], references: [id])
-  
+  description String
+  location    String
+  latitude    Float?   
+  longitude   Float?
+  provinsi    String
+  zipCode     String
+  mainImage   String?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+  images      PropertyImage[]
   rooms       Room[]
+  bookings    Booking[]
   reviews     Review[]
 }
 
-model Room {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?  @db.Text
-  basePrice   Float
-  capacity    Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  propertyId    Int
-  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  
-  specialPrices   SpecialPrice[]
-  availabilities  RoomAvailability[]
-  transactions    Transaction[]
+model PropertyImage {
+  id         Int    @id @default(autoincrement())
+  propertyId Int
+  imageUrl   String
+  property   Property @relation(fields: [propertyId], references: [id])
 }
 
-model SpecialPrice {
-  id        Int       @id @default(autoincrement())
-  date      DateTime  @db.Date
-  type      PriceType
-  value     Float
-  
-  roomId    Int
-  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+model Room {
+  id             Int                @id @default(autoincrement())
+  propertyId     Int
+  name           String
+  category       RoomCategory
+  description    String
+  bedOption      BedOption
+  imageRoom      String?
+  capacity       Int
+  basePrice      Float
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  property       Property           @relation(fields: [propertyId], references: [id])
+  images         RoomImage[]
+  availabilities RoomAvailability[]
+  bookingRooms   BookingRoom[]
+}
 
-  @@unique([roomId, date])
+model RoomImage {
+  id       Int    @id @default(autoincrement())
+  roomId   Int
+  imageUrl String
+  room     Room   @relation(fields: [roomId], references: [id])
 }
 
 model RoomAvailability {
-  id        Int               @id @default(autoincrement())
-  date      DateTime          @db.Date
-  status    AvailabilityStatus @default(UNAVAILABLE)
-
-  roomId    Int
-  room      Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
+  id          Int      @id @default(autoincrement())
+  roomId      Int
+  isAvailable Boolean  @default(true)
+  date        DateTime @db.Date
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  room        Room     @relation(fields: [roomId], references: [id])
   @@unique([roomId, date])
 }
 
-model Transaction {
-  id            String            @id @default(uuid())
-  invoiceNumber String            @unique
-  startDate     DateTime          @db.Date
-  endDate       DateTime          @db.Date
-  totalPrice    Float
-  status        TransactionStatus @default(MENUNGGU_PEMBAYARAN)
-  paymentProof  String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+model Booking {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  propertyId      Int
+  invoiceNumber   String        @unique
+  checkIn         DateTime
+  checkOut        DateTime
+  totalPrice      Float
+  status          BookingStatus @default(MENUNGGU_PEMBAYARAN)
+  paymentDeadline DateTime
+  paymentProof    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  property        Property      @relation(fields: [propertyId], references: [id])
+  bookingRooms    BookingRoom[]
+  review          Review?
+}
 
-  accountId     String
-  account       Account           @relation(fields: [accountId], references: [id])
-  roomId        Int
-  room          Room              @relation(fields: [roomId], references: [id])
-
-  review        Review?
+model BookingRoom {
+  id             Int      @id @default(autoincrement())
+  bookingId      Int
+  roomId         Int
+  guestCount     Int
+  pricePerNight  Float
+  numberOfNights Int
+  totalPrice     Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  booking        Booking  @relation(fields: [bookingId], references: [id])
+  room           Room     @relation(fields: [roomId], references: [id])
 }
 
 model Review {
   id          Int      @id @default(autoincrement())
-  comment     String   @db.Text
-  tenantReply String?  @db.Text
+  userId      Int
+  propertyId  Int
+  bookingId   Int      @unique
+  comment     String
+  tenantReply String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  transactionId String   @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  
-  accountId     String
-  account       Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-  propertyId    Int
-  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  property    Property @relation(fields: [propertyId], references: [id])
+  booking     Booking  @relation(fields: [bookingId], references: [id])
 }
 
-model VerificationToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  expires   DateTime
-  accountId String
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  @@unique([accountId, token])
-}
-
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  expires   DateTime
-  accountId String
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  @@unique([accountId, token])
+model Token {
+  id        Int          @id @default(autoincrement())
+  token     String       @unique
+  purpose   TokenPurpose
+  expiresAt DateTime
+  userId    Int
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id])
 }
