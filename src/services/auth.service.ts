@@ -10,10 +10,9 @@ export const AuthService = {
     if (existingUser) {
       throw new Error('Email sudah terdaftar.');
     }
-
     const user = await prisma.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.USER } });
     const verificationToken = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
-    console.log(`Verification token for ${user.email}: ${verificationToken}`);
+    await TokenService.sendTokenEmail(user, verificationToken, 'EMAIL_VERIFICATION');
     return user;
   },
 
@@ -21,13 +20,17 @@ export const AuthService = {
     const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
     if (existingUser) throw new Error('Email sudah terdaftar.');
 
+    let user, token;
     const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.TENANT } });
+      user = await tx.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.TENANT } });
       await tx.tenant.create({ data: { userId: user.id, companyName: data.companyName, addressCompany: data.addressCompany, phoneNumberCompany: data.phoneNumberCompany } });
-      const verificationToken = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
-      console.log(`Verification token for tenant ${user.email}: ${verificationToken}`);
+      token = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION', tx);
       return user;
     });
+
+    if (user && token) {
+      await TokenService.sendTokenEmail(user, token, 'EMAIL_VERIFICATION');
+    }
     return result;
   },
 
@@ -41,8 +44,8 @@ export const AuthService = {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error('User tidak ditemukan.');
     if (user.verified) throw new Error('Akun ini sudah terverifikasi.');
-    const verificationToken = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
-    console.log(`NEW Verification token for ${user.email}: ${verificationToken}`);
+    const token = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
+    await TokenService.sendTokenEmail(user, token, 'EMAIL_VERIFICATION');
   },
 
   login: async (data: any) => {
@@ -58,8 +61,8 @@ export const AuthService = {
   requestPasswordReset: async (email: string) => {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password) throw new Error('Jika email terdaftar, kami akan mengirimkan link reset.');
-    const resetToken = await TokenService.createToken(user.id, 'PASSWORD_RESET');
-    console.log(`Password reset token for ${user.email}: ${resetToken}`);
+    const token = await TokenService.createToken(user.id, 'PASSWORD_RESET');
+    await TokenService.sendTokenEmail(user, token, 'PASSWORD_RESET');
   },
 
   resetPassword: async (token: string, password: string) => {

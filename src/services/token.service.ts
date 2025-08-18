@@ -1,19 +1,17 @@
 import { prisma } from '../config/prisma';
-import { TokenPurpose } from '@prisma/client';
+import { PrismaClient, Prisma, TokenPurpose, User } from '@prisma/client';
 import crypto from 'crypto';
 import { addHours } from 'date-fns';
 import { sendEmail } from '../utils/mailer';
 
-export const TokenService = {
-  createToken: async (userId: number, purpose: TokenPurpose, expiresInHours: number = 1) => {
-    const token = crypto.randomBytes(32).toString('hex');
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    
-    if (!user) {
-        throw new Error("User not found to create token");
-    }
+type PrismaTransactionClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
-    await prisma.token.create({
+export const TokenService = {
+  createToken: async (userId: number, purpose: TokenPurpose, tx?: PrismaTransactionClient, expiresInHours: number = 1) => {
+    const prismaClient = tx || prisma;
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await prismaClient.token.create({
       data: {
         token,
         purpose,
@@ -21,7 +19,11 @@ export const TokenService = {
         userId,
       },
     });
+    
+    return token;
+  },
 
+  sendTokenEmail: async (user: User, token: string, purpose: TokenPurpose) => {
     if (purpose === 'EMAIL_VERIFICATION') {
         const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
         await sendEmail({
@@ -47,10 +49,6 @@ export const TokenService = {
             `
         });
     }
-
-    console.log(`Token for ${purpose} for ${user.email}: ${token}`);
-    
-    return token;
   },
 
   validateAndUseToken: async (token: string, purpose: TokenPurpose) => {

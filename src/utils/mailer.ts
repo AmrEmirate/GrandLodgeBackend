@@ -18,13 +18,12 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (options: MailOptions) => {
   try {
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Grand Lodge" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
-    console.log('Message sent: %s', info.messageId);
   } catch (error) {
     console.error('Error sending email:', error);
   }
