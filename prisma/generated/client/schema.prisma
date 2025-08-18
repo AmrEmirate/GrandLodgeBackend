@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  TENANT
+  USER
+}
+
+enum BookingStatus {
+  MENUNGGU_PEMBAYARAN
+  MENUNGGU_KONFIRMASI
+  DIPROSES
+  DIBATALKAN
+  SELESAI
+}
+
+enum BedOption {
+  SINGLE
+  DOUBLE
+  TWIN
+}
+
+enum RoomCategory {
+  STANDARD
+  DELUXE
+  SUITE
+}
+
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  role           UserRole
+  fullName       String
+  email          String    @unique
+  password       String?
+  profilePicture String?
+  provider       String?
+  providerId     String?
+  verified       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant?
+  bookings       Booking[]
+  reviews        Review[]
+  tokens         Token[]
+
+  @@unique([provider, providerId])
+}
+
+model Tenant {
+  id                 Int        @id @default(autoincrement())
+  userId             Int        @unique
+  companyName        String
+  addressCompany     String
+  phoneNumberCompany String
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  user               User       @relation(fields: [userId], references: [id])
+  properties         Property[]
+}
+
+model Category {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  properties Property[]
+}
+
+model Property {
+  id          Int             @id @default(autoincrement())
+  tenantId    Int
+  name        String
+  categoryId  Int
+  description String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  provinsi    String
+  zipCode     String
+  mainImage   String?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+  images      PropertyImage[]
+  rooms       Room[]
+  bookings    Booking[]
+  reviews     Review[]
+}
+
+model PropertyImage {
+  id         Int      @id @default(autoincrement())
+  propertyId Int
+  imageUrl   String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model Room {
+  id             Int                @id @default(autoincrement())
+  propertyId     Int
+  name           String
+  category       RoomCategory
+  description    String
+  bedOption      BedOption
+  imageRoom      String?
+  capacity       Int
+  basePrice      Float
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  property       Property           @relation(fields: [propertyId], references: [id])
+  images         RoomImage[]
+  availabilities RoomAvailability[]
+  bookingRooms   BookingRoom[]
+}
+
+model RoomImage {
+  id       Int    @id @default(autoincrement())
+  roomId   Int
+  imageUrl String
+  room     Room   @relation(fields: [roomId], references: [id])
+}
+
+model RoomAvailability {
+  id          Int      @id @default(autoincrement())
+  roomId      Int
+  isAvailable Boolean  @default(true)
+  date        DateTime @db.Date
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  room        Room     @relation(fields: [roomId], references: [id])
+
+  @@unique([roomId, date])
+}
+
+model Booking {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  propertyId      Int
+  invoiceNumber   String        @unique
+  checkIn         DateTime
+  checkOut        DateTime
+  totalPrice      Float
+  status          BookingStatus @default(MENUNGGU_PEMBAYARAN)
+  paymentDeadline DateTime
+  paymentProof    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id])
+  property        Property      @relation(fields: [propertyId], references: [id])
+  bookingRooms    BookingRoom[]
+  review          Review?
+}
+
+model BookingRoom {
+  id             Int      @id @default(autoincrement())
+  bookingId      Int
+  roomId         Int
+  guestCount     Int
+  pricePerNight  Float
+  numberOfNights Int
+  totalPrice     Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  booking        Booking  @relation(fields: [bookingId], references: [id])
+  room           Room     @relation(fields: [roomId], references: [id])
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  propertyId  Int
+  bookingId   Int      @unique
+  comment     String
+  tenantReply String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+  property    Property @relation(fields: [propertyId], references: [id])
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model Token {
+  id        Int          @id @default(autoincrement())
+  token     String       @unique
+  purpose   TokenPurpose
+  expiresAt DateTime
+  userId    Int
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id])
+}
