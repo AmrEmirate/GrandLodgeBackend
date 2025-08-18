@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CategoryService } from '../services/category.servlce';
+import { CategoryService } from '../services/category.service';
 
 export const CategoryController = {
   create: async (req: Request, res: Response) => {
