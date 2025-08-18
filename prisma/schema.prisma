@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum UserRole {
+enum UserRole { 
   TENANT
   USER
 }
