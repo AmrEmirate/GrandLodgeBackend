@@ -11,8 +11,10 @@ export const AuthService = {
       throw new Error('Email sudah terdaftar.');
     }
     const user = await prisma.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.USER } });
+    
     const verificationToken = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
     await TokenService.sendTokenEmail(user, verificationToken, 'EMAIL_VERIFICATION');
+    
     return user;
   },
 
