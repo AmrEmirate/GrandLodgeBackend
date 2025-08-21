@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { Category } from '@prisma/client';
+import { UserRole, Category } from "../generated/prisma";
 
 export const CategoryRepository = {
   create: async (name: string): Promise<Category> => {

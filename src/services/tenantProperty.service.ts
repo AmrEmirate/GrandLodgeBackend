@@ -1,5 +1,5 @@
 import { PropertyRepository } from '../repositories/property.repository';
-import { Property } from '@prisma/client';
+import { Property } from '../generated/prisma';
 import { GeocodingService } from './geocoding.service';
 
 export const TenantPropertyService = {
@@ -37,7 +37,6 @@ export const TenantPropertyService = {
 
   updateProperty: async (id: number, tenantId: number, data: any): Promise<Property> => {
     await TenantPropertyService.getPropertyDetailForTenant(id, tenantId);
-    // Note: Anda juga bisa menambahkan logika geocoding di sini jika alamat diupdate
     return await PropertyRepository.update(id, data);
   },
 

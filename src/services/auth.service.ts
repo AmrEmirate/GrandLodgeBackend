@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '../generated/prisma';
 import { hashPassword, comparePassword } from '../utils/hashing';
 import { generateToken } from '../utils/jwt';
 import { TokenService } from './token.service';

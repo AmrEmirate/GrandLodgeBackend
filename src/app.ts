@@ -1,23 +1,66 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import mainRouter from './routers';
-import passport from 'passport';
-import './config/passport'; 
-
+// src/app.ts
+import dotenv from "dotenv";
 dotenv.config();
+import cors from "cors";
+import express, { Application, Request, Response, NextFunction } from "express";
+import passport from 'passport';
 
-const app = express();
+// Impor Konfigurasi
+import './config/passport';
 
-app.use(cors());
-app.use(express.json());
+// Impor Router dari Feature 1 
+import authRouter from './routers/auth.router';
+import userRouter from './routers/user.router';
+import categoryRouter from './routers/category.router';
+import propertyRouter from './routers/property.router';
 
-app.use(passport.initialize()); 
+const PORT: string = process.env.PORT || "2020";
 
-app.use('/api', mainRouter);
+class App {
+    public app: Application;
 
-app.get('/', (req, res) => {
-  res.send('Grand Lodge Web App API');
-});
+    constructor() {
+        this.app = express();
+        this.configure();
+        this.routes();
+        this.errorHandler();
+    }
 
-export default app;
+    private configure(): void {
+        this.app.use(cors());
+        this.app.use(express.json());
+        this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(passport.initialize());
+    }
+
+    private routes(): void {
+        // --- ROUTER UNTUK FEATURE 1 (ANDA) ---
+        this.app.use('/api/auth', authRouter);
+        this.app.use('/api/user', userRouter);
+        this.app.use('/api/categories', categoryRouter);
+        this.app.use('/api/properties', propertyRouter);
+
+        // Rute dasar
+        this.app.get("/", (req: Request, res: Response) => {
+            res.status(200).send("<h1>Welcome to Final Project Grand Lodge</h1>");
+        });
+    }
+
+    private errorHandler(): void {
+        this.app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+            console.error(error);
+            res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Internal Server Error",
+            });
+        });
+    }
+
+    public start(): void {
+        this.app.listen(PORT, () => {
+            console.log(`Server is Running on http://localhost:${PORT}`);
+        });
+    }
+}
+
+export default App;

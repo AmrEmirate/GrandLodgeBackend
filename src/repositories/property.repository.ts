@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { Property } from '@prisma/client';
+import { Property } from '../generated/prisma';
 
 export const PropertyRepository = {
   create: async (data: any, tenantId: number): Promise<Property> => {

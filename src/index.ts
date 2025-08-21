@@ -1,7 +1,8 @@
-import app from './app';
+import App from "./app";
 
-const PORT = process.env.PORT || 2020;
+const main = () => {
+    const server = new App();
+    server.start();
+};
 
-app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
-});
+main();

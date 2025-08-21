@@ -1,5 +1,5 @@
 import { CategoryRepository } from '../repositories/category.repository';
-import { Category } from '@prisma/client';
+import { Category } from '../generated/prisma';
 import { prisma } from '../config/prisma';
 
 export const CategoryService = {
