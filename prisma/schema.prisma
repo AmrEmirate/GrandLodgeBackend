@@ -52,6 +52,7 @@ model User {
   verified       Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? 
   tenant         Tenant?
   bookings       Booking[]
   reviews        Review[]
@@ -68,6 +69,7 @@ model Tenant {
   phoneNumberCompany String
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+  deletedAt          DateTime? 
   user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   properties         Property[]
 }
@@ -76,12 +78,14 @@ model Category {
   id         String     @id @default(uuid())
   name       String     @unique
   properties Property[]
+  deletedAt  DateTime?
 }
 
 model Amenity {
   id         String     @id @default(uuid())
   name       String     @unique
   properties Property[] @relation()
+  deletedAt  DateTime?
 }
 
 model City {
@@ -91,6 +95,7 @@ model City {
   latitude   Float
   longitude  Float
   properties Property[]
+  deletedAt  DateTime?
 }
 
 model Property {
@@ -137,6 +142,7 @@ model Room {
   basePrice      Float
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
   property       Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   images         RoomImage[]
   availabilities RoomAvailability[]
@@ -207,6 +213,7 @@ model Review {
   reply       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? 
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)

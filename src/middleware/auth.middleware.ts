@@ -23,8 +23,12 @@ export const authMiddleware = (roles: UserRole[] = []) => {
     }
 
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.id },
+      // Menggunakan findFirst untuk menambahkan kondisi soft delete
+      const user = await prisma.user.findFirst({
+        where: {
+          id: decoded.id,
+          deletedAt: null, // Pastikan pengguna belum di-soft delete
+        },
         include: {
           tenant: true,
         },
@@ -40,6 +44,7 @@ export const authMiddleware = (roles: UserRole[] = []) => {
 
       req.user = user;
 
+      // Memeriksa otorisasi peran (role)
       if (roles.length > 0 && !roles.includes(user.role)) {
         return res.status(403).json({ message: 'Anda tidak memiliki hak akses untuk sumber daya ini.' });
       }

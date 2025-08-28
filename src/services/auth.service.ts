@@ -6,26 +6,45 @@ import { TokenService } from './token.service';
 
 export const AuthService = {
   registerUser: async (data: any) => {
-    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+    const existingUser = await prisma.user.findFirst({
+      where: { email: data.email, deletedAt: null },
+    });
     if (existingUser) {
       throw new Error('Email sudah terdaftar.');
     }
-    const user = await prisma.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.USER } });
-    
+    const user = await prisma.user.create({
+      data: { fullName: data.fullName, email: data.email, role: UserRole.USER },
+    });
+
     const verificationToken = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
     await TokenService.sendTokenEmail(user, verificationToken, 'EMAIL_VERIFICATION');
-    
+
     return user;
   },
 
   registerTenant: async (data: any) => {
-    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+    const existingUser = await prisma.user.findFirst({
+      where: { email: data.email, deletedAt: null },
+    });
     if (existingUser) throw new Error('Email sudah terdaftar.');
 
     let user, token;
-    const result = await prisma.$transaction(async (tx) => {
-      user = await tx.user.create({ data: { fullName: data.fullName, email: data.email, role: UserRole.TENANT } });
-      await tx.tenant.create({ data: { userId: user.id, companyName: data.companyName, addressCompany: data.addressCompany, phoneNumberCompany: data.phoneNumberCompany } });
+    const result = await prisma.$transaction(async tx => {
+      user = await tx.user.create({
+        data: {
+          fullName: data.fullName,
+          email: data.email,
+          role: UserRole.TENANT,
+        },
+      });
+      await tx.tenant.create({
+        data: {
+          userId: user.id,
+          companyName: data.companyName,
+          addressCompany: data.addressCompany,
+          phoneNumberCompany: data.phoneNumberCompany,
+        },
+      });
       token = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION', tx);
       return user;
     });
@@ -39,11 +58,16 @@ export const AuthService = {
   verifyEmailAndSetPassword: async (token: string, password: string) => {
     const userId = await TokenService.validateAndUseToken(token, 'EMAIL_VERIFICATION');
     const hashedPassword = await hashPassword(password);
-    return await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword, verified: true } });
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword, verified: true },
+    });
   },
 
   resendVerificationEmail: async (email: string) => {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email, deletedAt: null },
+    });
     if (!user) throw new Error('User tidak ditemukan.');
     if (user.verified) throw new Error('Akun ini sudah terverifikasi.');
     const token = await TokenService.createToken(user.id, 'EMAIL_VERIFICATION');
@@ -51,7 +75,12 @@ export const AuthService = {
   },
 
   login: async (data: any) => {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    const user = await prisma.user.findFirst({
+      where: {
+        email: data.email,
+        deletedAt: null, // Perubahan di sini
+      },
+    });
     if (!user || !user.password) throw new Error('Email atau password salah.');
     if (!user.verified) throw new Error('Akun belum diverifikasi.');
     const isPasswordValid = await comparePassword(data.password, user.password);
@@ -61,8 +90,15 @@ export const AuthService = {
   },
 
   requestPasswordReset: async (email: string) => {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.password) throw new Error('Jika email terdaftar, kami akan mengirimkan link reset.');
+    const user = await prisma.user.findFirst({
+      where: { email, deletedAt: null },
+    });
+    // Jangan beri tahu jika user ada atau tidak untuk keamanan
+    if (!user || !user.password) {
+      // Melempar error di sini sebenarnya tidak perlu karena pesan sukses dikirim di controller
+      // Namun, kita tetap lanjut seolah-olah proses berhasil
+      return;
+    }
     const token = await TokenService.createToken(user.id, 'PASSWORD_RESET');
     await TokenService.sendTokenEmail(user, token, 'PASSWORD_RESET');
   },
@@ -70,13 +106,24 @@ export const AuthService = {
   resetPassword: async (token: string, password: string) => {
     const userId = await TokenService.validateAndUseToken(token, 'PASSWORD_RESET');
     const hashedPassword = await hashPassword(password);
-    await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
   },
 
   getProfile: async (userId: string) => {
+    // Diasumsikan `authMiddleware` sudah memfilter user yang di-soft delete
     return await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, fullName: true, email: true, role: true, profilePicture: true, verified: true },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        profilePicture: true,
+        verified: true,
+      },
     });
   },
 };
