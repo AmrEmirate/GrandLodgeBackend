@@ -22,7 +22,8 @@ export const CityController = {
 
   update: async (req: Request, res: Response) => {
     try {
-      const city = await CityService.updateCity(Number(req.params.id), req.body);
+      // ID diambil langsung sebagai string, tanpa konversi Number()
+      const city = await CityService.updateCity(req.params.id, req.body);
       res.status(200).json({ message: 'Kota berhasil diperbarui.', data: city });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -31,7 +32,8 @@ export const CityController = {
 
   delete: async (req: Request, res: Response) => {
     try {
-      await CityService.deleteCity(Number(req.params.id));
+      // ID diambil langsung sebagai string, tanpa konversi Number()
+      await CityService.deleteCity(req.params.id);
       res.status(200).json({ message: 'Kota berhasil dihapus.' });
     } catch (error: any) {
       res.status(404).json({ message: error.message });

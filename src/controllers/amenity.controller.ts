@@ -22,7 +22,8 @@ export const AmenityController = {
 
   update: async (req: Request, res: Response) => {
     try {
-      const amenity = await AmenityService.updateAmenity(Number(req.params.id), req.body.name);
+      // ID sekarang adalah string (UUID), tidak perlu diubah ke Number
+      const amenity = await AmenityService.updateAmenity(req.params.id, req.body.name);
       res.status(200).json({ message: 'Fasilitas berhasil diperbarui.', data: amenity });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -31,7 +32,8 @@ export const AmenityController = {
 
   delete: async (req: Request, res: Response) => {
     try {
-      await AmenityService.deleteAmenity(Number(req.params.id));
+      // ID sekarang adalah string (UUID), tidak perlu diubah ke Number
+      await AmenityService.deleteAmenity(req.params.id);
       res.status(200).json({ message: 'Fasilitas berhasil dihapus.' });
     } catch (error: any) {
       res.status(404).json({ message: error.message });

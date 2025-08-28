@@ -24,7 +24,8 @@ export const CityService = {
     return await CityRepository.findAll();
   },
 
-  updateCity: async (id: number, data: { name: string; provinsi: string }): Promise<City> => {
+  // --- PERUBAHAN DI BAWAH INI ---
+  updateCity: async (id: string, data: { name: string; provinsi: string }): Promise<City> => {
     const city = await CityRepository.findById(id);
     if (!city) {
       throw new Error('Kota tidak ditemukan.');
@@ -33,11 +34,12 @@ export const CityService = {
     return await CityRepository.update(id, data);
   },
 
-  deleteCity: async (id: number): Promise<City> => {
+  deleteCity: async (id: string): Promise<City> => {
     const city = await CityRepository.findById(id);
     if (!city) {
       throw new Error('Kota tidak ditemukan.');
     }
     return await CityRepository.delete(id);
   },
+  // --- AKHIR PERUBAHAN ---
 };

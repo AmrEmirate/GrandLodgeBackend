@@ -73,7 +73,7 @@ export const AuthService = {
     await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword } });
   },
 
-  getProfile: async (userId: number) => {
+  getProfile: async (userId: string) => {
     return await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, fullName: true, email: true, role: true, profilePicture: true, verified: true },

@@ -15,7 +15,7 @@ export const AmenityService = {
     return await AmenityRepository.findAll();
   },
 
-  updateAmenity: async (id: number, name: string): Promise<Amenity> => {
+  updateAmenity: async (id: string, name: string): Promise<Amenity> => {
     const amenity = await AmenityRepository.findById(id);
     if (!amenity) {
       throw new Error('Fasilitas tidak ditemukan.');
@@ -23,7 +23,7 @@ export const AmenityService = {
     return await AmenityRepository.update(id, name);
   },
 
-  deleteAmenity: async (id: number): Promise<Amenity> => {
+  deleteAmenity: async (id: string): Promise<Amenity> => {
     const amenity = await AmenityRepository.findById(id);
     if (!amenity) {
       throw new Error('Fasilitas tidak ditemukan.');

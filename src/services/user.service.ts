@@ -4,7 +4,7 @@ import { uploadToCloudinary } from '../utils/cloudinary';
 import { TokenService } from './token.service';
 
 export const UserService = {
-  updateProfile: async (userId: number, data: any, file: Express.Multer.File | undefined) => {
+  updateProfile: async (userId: string, data: any, file: Express.Multer.File | undefined) => {
     const updateData: any = {};
 
     if (data.fullName) {
@@ -31,7 +31,7 @@ export const UserService = {
     return updatedUser;
   },
 
-  updatePassword: async (userId: number, data: any) => {
+  updatePassword: async (userId: string, data: any) => {
     const { oldPassword, newPassword } = data;
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
@@ -51,7 +51,7 @@ export const UserService = {
     });
   },
 
-  requestEmailChange: async (userId: number, newEmail: string) => {
+  requestEmailChange: async (userId: string, newEmail: string) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User tidak ditemukan.');
 

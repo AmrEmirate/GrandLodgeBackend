@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { PrismaClient, Prisma, TokenPurpose, User } from '../generated/prisma';
+import { PrismaClient, TokenPurpose, User } from '../generated/prisma';
 import crypto from 'crypto';
 import { addHours } from 'date-fns';
 import { sendEmail } from '../utils/mailer';
@@ -7,7 +7,9 @@ import { sendEmail } from '../utils/mailer';
 type PrismaTransactionClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
 export const TokenService = {
-  createToken: async (userId: number, purpose: TokenPurpose, tx?: PrismaTransactionClient, expiresInHours: number = 1) => {
+  // --- PERUBAHAN DI SINI ---
+  // Tipe data userId diubah dari 'number' menjadi 'string'
+  createToken: async (userId: string, purpose: TokenPurpose, tx?: PrismaTransactionClient, expiresInHours: number = 1) => {
     const prismaClient = tx || prisma;
     const token = crypto.randomBytes(32).toString('hex');
     
@@ -81,6 +83,7 @@ export const TokenService = {
 
     await prisma.token.delete({ where: { id: dbToken.id } });
 
+    // Fungsi ini sekarang akan mengembalikan userId sebagai string, sesuai skema baru.
     return dbToken.userId;
   },
 };

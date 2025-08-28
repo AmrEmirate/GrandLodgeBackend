@@ -1,12 +1,16 @@
 import { PropertyRepository } from '../repositories/property.repository';
 import { Property } from '../generated/prisma';
-import { GeocodingService } from './geocoding.service';
 import { uploadToCloudinary } from '../utils/cloudinary';
-import { Express } from 'express'; // Pastikan Express diimpor untuk tipe Multer.File
+import { Express } from 'express';
 
 export const TenantPropertyService = {
-  createProperty: async (data: any, tenantId: number): Promise<Property> => {
-    // Logika ini sudah diperbarui untuk menggunakan cityId
+  /**
+   * Membuat properti baru untuk seorang tenant.
+   * @param data - Data properti yang akan dibuat (termasuk amenityIds sebagai string[]).
+   * @param tenantId - ID tenant (UUID) yang membuat properti.
+   */
+  createProperty: async (data: any, tenantId: string): Promise<Property> => {
+    // amenityIds sekarang diharapkan menjadi array of strings (UUIDs)
     const { name, categoryId, description, zipCode, amenityIds, cityId } = data;
     
     const propertyData = {
@@ -20,11 +24,20 @@ export const TenantPropertyService = {
     return await PropertyRepository.create(propertyData, tenantId, amenityIds);
   },
 
-  getPropertiesByTenant: async (tenantId: number): Promise<Property[]> => {
+  /**
+   * Mendapatkan semua properti yang dimiliki oleh seorang tenant.
+   * @param tenantId - ID tenant (UUID).
+   */
+  getPropertiesByTenant: async (tenantId: string): Promise<Property[]> => {
     return await PropertyRepository.findAllByTenantId(tenantId);
   },
 
-  getPropertyDetailForTenant: async (id: number, tenantId: number): Promise<Property> => {
+  /**
+   * Mendapatkan detail satu properti milik tenant.
+   * @param id - ID properti (UUID).
+   * @param tenantId - ID tenant (UUID) untuk validasi kepemilikan.
+   */
+  getPropertyDetailForTenant: async (id: string, tenantId: string): Promise<Property> => {
     const property = await PropertyRepository.findByIdAndTenantId(id, tenantId);
     if (!property) {
       throw new Error('Properti tidak ditemukan atau Anda tidak memiliki akses.');
@@ -32,33 +45,58 @@ export const TenantPropertyService = {
     return property;
   },
 
-  updateProperty: async (id: number, tenantId: number, data: any): Promise<Property> => {
-    const { amenityIds, ...propertyData } = data;
+  /**
+   * Memperbarui data properti.
+   * @param id - ID properti (UUID) yang akan diperbarui.
+   * @param tenantId - ID tenant (UUID) untuk validasi.
+   * @param data - Data baru untuk properti.
+   */
+  updateProperty: async (id: string, tenantId: string, data: any): Promise<Property> => {
+    // Pastikan properti ini ada dan dimiliki oleh tenant
     await TenantPropertyService.getPropertyDetailForTenant(id, tenantId);
+    
+    const { amenityIds, ...propertyData } = data;
     return await PropertyRepository.update(id, propertyData, amenityIds);
   },
 
-  deleteProperty: async (id: number, tenantId: number): Promise<Property> => {
+  /**
+   * Menghapus properti secara soft delete.
+   * @param id - ID properti (UUID) yang akan dihapus.
+   * @param tenantId - ID tenant (UUID) untuk validasi.
+   */
+  deleteProperty: async (id: string, tenantId: string): Promise<Property> => {
+    // Pastikan properti ini ada dan dimiliki oleh tenant
     await TenantPropertyService.getPropertyDetailForTenant(id, tenantId);
     return await PropertyRepository.softDelete(id);
   },
 
-  uploadPropertyImage: async (id: number, tenantId: number, file: Express.Multer.File): Promise<Property> => {
-    // 1. Pastikan properti ini milik tenant yang sedang login
+  /**
+   * Mengunggah gambar utama (mainImage) untuk sebuah properti.
+   * @param id - ID properti (UUID).
+   * @param tenantId - ID tenant (UUID).
+   * @param file - File gambar yang diunggah.
+   */
+  uploadPropertyImage: async (id: string, tenantId: string, file: Express.Multer.File): Promise<Property> => {
+    // Validasi kepemilikan properti
     await TenantPropertyService.getPropertyDetailForTenant(id, tenantId);
     
-    // 2. Upload file ke Cloudinary
     const result = await uploadToCloudinary(file.buffer, 'property_images');
     
-    // 3. Update database dengan URL gambar baru
+    // Update database dengan URL gambar baru
     return await PropertyRepository.update(id, { mainImage: result.secure_url });
   },
 
-  uploadGalleryImages: async (id: number, tenantId: number, files: Express.Multer.File[]) => {
-    // 1. Pastikan properti ini milik tenant yang sedang login
+  /**
+   * Mengunggah beberapa gambar galeri untuk sebuah properti.
+   * @param id - ID properti (UUID).
+   * @param tenantId - ID tenant (UUID).
+   * @param files - Array file gambar yang diunggah.
+   */
+  uploadGalleryImages: async (id: string, tenantId: string, files: Express.Multer.File[]) => {
+    // Validasi kepemilikan properti
     await TenantPropertyService.getPropertyDetailForTenant(id, tenantId);
 
-    // 2. Upload semua file ke Cloudinary secara paralel
+    // Upload semua file ke Cloudinary secara paralel
     const uploadPromises = files.map(file => 
         uploadToCloudinary(file.buffer, 'property_gallery')
     );
@@ -66,7 +104,7 @@ export const TenantPropertyService = {
     const uploadResults = await Promise.all(uploadPromises);
     const imageUrls = uploadResults.map(result => result.secure_url);
 
-    // 3. Simpan semua URL gambar baru ke database
+    // Simpan semua URL gambar baru ke database
     return await PropertyRepository.addGalleryImages(id, imageUrls);
   },
 };

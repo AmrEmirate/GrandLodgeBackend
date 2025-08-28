@@ -16,7 +16,8 @@ export const PropertyController = {
 
   getOne: async (req: Request, res: Response) => {
     try {
-      const property = await PublicPropertyService.getPropertyById(Number(req.params.id));
+      // Perubahan: Menghapus Number()
+      const property = await PublicPropertyService.getPropertyById(req.params.id);
       if (!property) {
         return res.status(404).json({ message: 'Properti tidak ditemukan.' });
       }
@@ -33,7 +34,8 @@ export const PropertyController = {
       if (!month || !year) {
         return res.status(400).json({ message: 'Parameter bulan dan tahun dibutuhkan.' });
       }
-      const availability = await PublicPropertyService.getMonthlyAvailability(Number(id), Number(month), Number(year));
+      // Perubahan: Menghapus Number() dari 'id'
+      const availability = await PublicPropertyService.getMonthlyAvailability(id, Number(month), Number(year));
       res.status(200).json({ data: availability });
     } catch (error: any) {
       res.status(500).json({ message: 'Gagal mengambil data ketersediaan.' });
@@ -82,7 +84,8 @@ export const PropertyController = {
       if (!tenantId) {
         return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan tenant.' });
       }
-      const property = await TenantPropertyService.getPropertyDetailForTenant(Number(req.params.id), tenantId);
+      // Perubahan: Menghapus Number()
+      const property = await TenantPropertyService.getPropertyDetailForTenant(req.params.id, tenantId);
       res.status(200).json({ data: property });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -95,7 +98,8 @@ export const PropertyController = {
       if (!tenantId) {
         return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan tenant.' });
       }
-      const property = await TenantPropertyService.updateProperty(Number(req.params.id), tenantId, req.body);
+      // Perubahan: Menghapus Number()
+      const property = await TenantPropertyService.updateProperty(req.params.id, tenantId, req.body);
       res.status(200).json({ message: 'Properti berhasil diperbarui.', data: property });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -108,7 +112,8 @@ export const PropertyController = {
       if (!tenantId) {
         return res.status(403).json({ message: 'Akses ditolak. Akun ini bukan tenant.' });
       }
-      await TenantPropertyService.deleteProperty(Number(req.params.id), tenantId);
+      // Perubahan: Menghapus Number()
+      await TenantPropertyService.deleteProperty(req.params.id, tenantId);
       res.status(200).json({ message: 'Properti berhasil dihapus.' });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -123,8 +128,9 @@ export const PropertyController = {
         const file = req.file;
         if (!file) throw new Error('Tidak ada file yang diunggah');
 
+        // Perubahan: Menghapus Number()
         const property = await TenantPropertyService.uploadPropertyImage(
-            Number(req.params.id), 
+            req.params.id, 
             tenantId, 
             file
         );
@@ -143,9 +149,10 @@ export const PropertyController = {
         if (!files || files.length === 0) {
             throw new Error('Tidak ada file yang diunggah');
         }
-
+        
+        // Perubahan: Menghapus Number()
         const property = await TenantPropertyService.uploadGalleryImages(
-            Number(req.params.id),
+            req.params.id,
             tenantId,
             files
         );

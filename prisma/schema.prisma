@@ -41,7 +41,7 @@ enum TokenPurpose {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
+  id             String    @id @default(uuid())
   role           UserRole
   fullName       String
   email          String    @unique
@@ -56,12 +56,13 @@ model User {
   bookings       Booking[]
   reviews        Review[]
   tokens         Token[]
+
   @@unique([provider, providerId])
 }
 
 model Tenant {
-  id                 Int        @id @default(autoincrement())
-  userId             Int        @unique
+  id                 String     @id @default(uuid())
+  userId             String     @unique
   companyName        String
   addressCompany     String
   phoneNumberCompany String
@@ -72,19 +73,19 @@ model Tenant {
 }
 
 model Category {
-  id         Int        @id @default(autoincrement())
+  id         String     @id @default(uuid())
   name       String     @unique
   properties Property[]
 }
 
 model Amenity {
-  id         Int        @id @default(autoincrement())
-  name       String     @unique 
-  properties Property[]
+  id         String     @id @default(uuid())
+  name       String     @unique
+  properties Property[] @relation()
 }
 
 model City {
-  id         Int        @id @default(autoincrement())
+  id         String     @id @default(uuid())
   name       String     @unique
   provinsi   String
   latitude   Float
@@ -93,12 +94,12 @@ model City {
 }
 
 model Property {
-  id          Int             @id @default(autoincrement())
-  tenantId    Int
+  id          String          @id @default(uuid())
+  tenantId    String
   name        String
-  categoryId  Int
+  categoryId  String
   description String
-  cityId      Int            
+  cityId      String
   zipCode     String
   mainImage   String?
   deletedAt   DateTime?
@@ -111,21 +112,22 @@ model Property {
   rooms       Room[]
   bookings    Booking[]
   reviews     Review[]
-  amenities   Amenity[]
+  amenities   Amenity[]       @relation()
+
   @@index([categoryId])
-  @@index([cityId])   
+  @@index([cityId])
 }
 
 model PropertyImage {
-  id         Int      @id @default(autoincrement())
-  propertyId Int
+  id         String   @id @default(uuid())
+  propertyId String
   imageUrl   String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model Room {
-  id             Int                @id @default(autoincrement())
-  propertyId     Int
+  id             String             @id @default(uuid())
+  propertyId     String
   name           String
   category       RoomCategory
   description    String
@@ -142,28 +144,29 @@ model Room {
 }
 
 model RoomImage {
-  id       Int    @id @default(autoincrement())
-  roomId   Int
+  id       String @id @default(uuid())
+  roomId   String
   imageUrl String
   room     Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model RoomAvailability {
-  id          Int      @id @default(autoincrement())
-  roomId      Int
+  id          String   @id @default(uuid())
+  roomId      String
   isAvailable Boolean  @default(true)
   date        DateTime @db.Date
   price       Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
   @@unique([roomId, date])
 }
 
 model Booking {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  propertyId      Int
+  id              String        @id @default(uuid())
+  userId          String
+  propertyId      String
   invoiceNumber   String        @unique
   checkIn         DateTime
   checkOut        DateTime
@@ -180,9 +183,9 @@ model Booking {
 }
 
 model BookingRoom {
-  id             Int      @id @default(autoincrement())
-  bookingId      Int
-  roomId         Int
+  id             String   @id @default(uuid())
+  bookingId      String
+  roomId         String
   guestCount     Int
   pricePerNight  Float
   numberOfNights Int
@@ -194,10 +197,10 @@ model BookingRoom {
 }
 
 model Review {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  propertyId  Int
-  bookingId   Int       @unique
+  id          String    @id @default(uuid())
+  userId      String
+  propertyId  String
+  bookingId   String    @unique
   rating      Int
   comment     String?
   tenantReply String?
@@ -210,11 +213,11 @@ model Review {
 }
 
 model Token {
-  id        Int          @id @default(autoincrement())
+  id        String       @id @default(uuid())
   token     String       @unique
   purpose   TokenPurpose
   expiresAt DateTime
-  userId    Int
+  userId    String
   createdAt DateTime     @default(now())
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

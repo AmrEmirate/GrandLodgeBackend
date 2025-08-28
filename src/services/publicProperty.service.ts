@@ -2,9 +2,13 @@ import { prisma } from '../config/prisma';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 export const PublicPropertyService = {
+  /**
+   * Mengambil daftar properti dengan filter, paginasi, dan sorting.
+   * @param filters - Objek berisi filter seperti page, limit, sortBy, dll.
+   */
   getProperties: async (filters: any) => {
     const { page = 1, limit = 10, sortBy = 'name', order = 'asc', search, category, location, startDate, endDate } = filters;
-    const skip = (page - 1) * limit;
+    const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { deletedAt: null };
 
@@ -55,11 +59,15 @@ export const PublicPropertyService = {
 
     return {
       data: properties,
-      meta: { total: totalProperties, page: Number(page), limit: Number(limit), totalPages: Math.ceil(totalProperties / limit) },
+      meta: { total: totalProperties, page: Number(page), limit: Number(limit), totalPages: Math.ceil(totalProperties / Number(limit)) },
     };
   },
   
-  getPropertyById: async (id: number) => {
+  /**
+   * Mengambil detail properti berdasarkan ID uniknya.
+   * @param id - ID properti (UUID).
+   */
+  getPropertyById: async (id: string) => {
     return await prisma.property.findUnique({
       where: { id, deletedAt: null },
       include: {
@@ -72,7 +80,13 @@ export const PublicPropertyService = {
     });
   },
   
-  getMonthlyAvailability: async (propertyId: number, month: number, year: number) => {
+  /**
+   * Mengambil ketersediaan dan harga terendah untuk setiap hari dalam satu bulan.
+   * @param propertyId - ID properti (UUID).
+   * @param month - Bulan (1-12).
+   * @param year - Tahun.
+   */
+  getMonthlyAvailability: async (propertyId: string, month: number, year: number) => {
     const startDate = startOfMonth(new Date(year, month - 1));
     const endDate = endOfMonth(new Date(year, month - 1));
 
@@ -116,6 +130,9 @@ export const PublicPropertyService = {
     return result;
   },
 
+  /**
+   * Mengambil semua data kota.
+   */
   getCities: async () => {
     return await prisma.city.findMany({
       orderBy: {

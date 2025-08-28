@@ -15,7 +15,7 @@ export const CategoryService = {
     return await CategoryRepository.findAll();
   },
 
-  getCategoryById: async (id: number): Promise<Category | null> => {
+  getCategoryById: async (id: string): Promise<Category | null> => {
     const category = await CategoryRepository.findById(id);
     if (!category) {
       throw new Error('Kategori tidak ditemukan.');
@@ -23,13 +23,13 @@ export const CategoryService = {
     return category;
   },
 
-  updateCategory: async (id: number, name: string): Promise<Category> => {
-    await CategoryService.getCategoryById(id);
+  updateCategory: async (id: string, name: string): Promise<Category> => {
+    await CategoryService.getCategoryById(id); // Memastikan kategori ada sebelum update
     return await CategoryRepository.update(id, name);
   },
 
-  deleteCategory: async (id: number): Promise<Category> => {
-    await CategoryService.getCategoryById(id);
+  deleteCategory: async (id: string): Promise<Category> => {
+    await CategoryService.getCategoryById(id); // Memastikan kategori ada sebelum dihapus
     return await CategoryRepository.delete(id);
   },
 };

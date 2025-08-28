@@ -4,7 +4,7 @@ import { Room } from '../generated/prisma';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export const RoomService = {
-  createRoom: async (tenantId: number, propertyId: number, data: any): Promise<Room> => {
+  createRoom: async (tenantId: string, propertyId: string, data: any): Promise<Room> => {
     const property = await PropertyRepository.findByIdAndTenantId(propertyId, tenantId);
     if (!property) {
       throw new Error('Properti tidak ditemukan atau Anda tidak memiliki akses.');
@@ -12,7 +12,7 @@ export const RoomService = {
     return await RoomRepository.create(propertyId, data);
   },
 
-  getRoomsByProperty: async (tenantId: number, propertyId: number): Promise<Room[]> => {
+  getRoomsByProperty: async (tenantId: string, propertyId: string): Promise<Room[]> => {
     const property = await PropertyRepository.findByIdAndTenantId(propertyId, tenantId);
     if (!property) {
       throw new Error('Properti tidak ditemukan atau Anda tidak memiliki akses.');
@@ -20,7 +20,7 @@ export const RoomService = {
     return await RoomRepository.findAllByPropertyId(propertyId);
   },
 
-  updateRoom: async (tenantId: number, propertyId: number, roomId: number, data: any): Promise<Room> => {
+  updateRoom: async (tenantId: string, propertyId: string, roomId: string, data: any): Promise<Room> => {
     const property = await PropertyRepository.findByIdAndTenantId(propertyId, tenantId);
     if (!property) {
       throw new Error('Properti tidak ditemukan atau Anda tidak memiliki akses.');
@@ -34,7 +34,7 @@ export const RoomService = {
     return await RoomRepository.update(roomId, data);
   },
 
-  deleteRoom: async (tenantId: number, propertyId: number, roomId: number): Promise<Room> => {
+  deleteRoom: async (tenantId: string, propertyId: string, roomId: string): Promise<Room> => {
     const property = await PropertyRepository.findByIdAndTenantId(propertyId, tenantId);
     if (!property) {
         throw new Error('Properti tidak ditemukan atau Anda tidak memiliki akses.');
@@ -48,7 +48,7 @@ export const RoomService = {
     return await RoomRepository.delete(roomId);
   },
 
-  uploadRoomGallery: async (tenantId: number, propertyId: number, roomId: number, files: Express.Multer.File[]) => {
+  uploadRoomGallery: async (tenantId: string, propertyId: string, roomId: string, files: Express.Multer.File[]) => {
     // 1. Validasi kepemilikan
     const property = await PropertyRepository.findByIdAndTenantId(propertyId, tenantId);
     if (!property) {

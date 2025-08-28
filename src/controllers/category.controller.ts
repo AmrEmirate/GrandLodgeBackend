@@ -22,7 +22,8 @@ export const CategoryController = {
 
   getById: async (req: Request, res: Response) => {
     try {
-      const category = await CategoryService.getCategoryById(Number(req.params.id));
+      // Perubahan: Menghapus Number()
+      const category = await CategoryService.getCategoryById(req.params.id);
       res.status(200).json({ data: category });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -31,7 +32,8 @@ export const CategoryController = {
 
   update: async (req: Request, res: Response) => {
     try {
-      const category = await CategoryService.updateCategory(Number(req.params.id), req.body.name);
+      // Perubahan: Menghapus Number()
+      const category = await CategoryService.updateCategory(req.params.id, req.body.name);
       res.status(200).json({ message: 'Kategori berhasil diperbarui.', data: category });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -40,7 +42,8 @@ export const CategoryController = {
 
   delete: async (req: Request, res: Response) => {
     try {
-      await CategoryService.deleteCategory(Number(req.params.id));
+      // Perubahan: Menghapus Number()
+      await CategoryService.deleteCategory(req.params.id);
       res.status(200).json({ message: 'Kategori berhasil dihapus.' });
     } catch (error: any) {
       res.status(404).json({ message: error.message });

@@ -10,7 +10,7 @@ export const RoomController = {
         return res.status(403).json({ message: 'Akses ditolak.' });
       }
       const { propertyId } = req.params;
-      const room = await RoomService.createRoom(tenantId, Number(propertyId), req.body);
+      const room = await RoomService.createRoom(tenantId, propertyId, req.body);
       res.status(201).json({ message: 'Kamar berhasil dibuat.', data: room });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -24,7 +24,7 @@ export const RoomController = {
         return res.status(403).json({ message: 'Akses ditolak.' });
       }
       const { propertyId } = req.params;
-      const rooms = await RoomService.getRoomsByProperty(tenantId, Number(propertyId));
+      const rooms = await RoomService.getRoomsByProperty(tenantId, propertyId);
       res.status(200).json({ data: rooms });
     } catch (error: any) {
       res.status(404).json({ message: error.message });
@@ -38,7 +38,7 @@ export const RoomController = {
             return res.status(403).json({ message: 'Akses ditolak.' });
         }
         const { propertyId, roomId } = req.params;
-        const room = await RoomService.updateRoom(tenantId, Number(propertyId), Number(roomId), req.body);
+        const room = await RoomService.updateRoom(tenantId, propertyId, roomId, req.body);
         res.status(200).json({ message: 'Kamar berhasil diperbarui.', data: room });
     } catch (error: any) {
         res.status(404).json({ message: error.message });
@@ -52,7 +52,7 @@ export const RoomController = {
             return res.status(403).json({ message: 'Akses ditolak.' });
         }
         const { propertyId, roomId } = req.params;
-        await RoomService.deleteRoom(tenantId, Number(propertyId), Number(roomId));
+        await RoomService.deleteRoom(tenantId, propertyId, roomId);
         res.status(200).json({ message: 'Kamar berhasil dihapus.' });
     } catch (error: any) {
         res.status(404).json({ message: error.message });
@@ -72,8 +72,8 @@ export const RoomController = {
 
         const room = await RoomService.uploadRoomGallery(
             tenantId,
-            Number(propertyId),
-            Number(roomId),
+            propertyId,
+            roomId,
             files
         );
         res.status(200).json({ message: 'Gambar galeri kamar berhasil diunggah', data: room });
