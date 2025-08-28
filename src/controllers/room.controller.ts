@@ -57,5 +57,28 @@ export const RoomController = {
     } catch (error: any) {
         res.status(404).json({ message: error.message });
     }
-  }
+  },
+
+  uploadGallery: async (req: AuthRequest, res: Response) => {
+    try {
+        const tenantId = req.user?.tenant?.id;
+        if (!tenantId) throw new Error('Akses ditolak');
+
+        const { propertyId, roomId } = req.params;
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
+            throw new Error('Tidak ada file yang diunggah');
+        }
+
+        const room = await RoomService.uploadRoomGallery(
+            tenantId,
+            Number(propertyId),
+            Number(roomId),
+            files
+        );
+        res.status(200).json({ message: 'Gambar galeri kamar berhasil diunggah', data: room });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+  },
 };

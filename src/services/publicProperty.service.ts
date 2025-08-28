@@ -10,7 +10,15 @@ export const PublicPropertyService = {
 
     if (search) where.name = { contains: search, mode: 'insensitive' };
     if (category) where.category = { name: category };
-    if (location) where.location = location;
+    
+    if (location) {
+        where.city = {
+            name: {
+                contains: location,
+                mode: 'insensitive'
+            }
+        };
+    }
 
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -38,6 +46,7 @@ export const PublicPropertyService = {
       orderBy: { name: sortBy === 'name' ? order : undefined },
       include: {
         category: true,
+        city: true,
         rooms: { orderBy: { basePrice: 'asc' }, take: 1 },
       },
     });
@@ -55,7 +64,9 @@ export const PublicPropertyService = {
       where: { id, deletedAt: null },
       include: {
         category: true,
+        city: true,
         rooms: true,
+        amenities: true,
         tenant: { include: { user: { select: { fullName: true, profilePicture: true } } } },
       },
     });
@@ -106,11 +117,10 @@ export const PublicPropertyService = {
   },
 
   getCities: async () => {
-    const properties = await prisma.property.findMany({
-      where: { deletedAt: null },
-      select: { location: true },
-      distinct: ['location'],
+    return await prisma.city.findMany({
+      orderBy: {
+        name: 'asc'
+      }
     });
-    return properties.map(p => p.location);
   },
 };

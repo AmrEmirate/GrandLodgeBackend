@@ -13,6 +13,8 @@ import authRouter from './routers/auth.router';
 import userRouter from './routers/user.router';
 import categoryRouter from './routers/category.router';
 import propertyRouter from './routers/property.router';
+import amenityRouter from './routers/amenity.router';
+import cityRouter from './routers/city.router';
 
 const PORT: string = process.env.PORT || "2020";
 
@@ -39,6 +41,8 @@ class App {
         this.app.use('/api/user', userRouter);
         this.app.use('/api/categories', categoryRouter);
         this.app.use('/api/properties', propertyRouter);
+        this.app.use('/api/amenities', amenityRouter);
+        this.app.use('/api/cities', cityRouter);
 
         // Rute dasar
         this.app.get("/", (req: Request, res: Response) => {

@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma';
-import { Room, RoomCategory, BedOption } from '@prisma/client';
+import { Room, RoomCategory, BedOption } from '../generated/prisma';
 
 interface RoomData {
   name: string;
@@ -47,6 +47,22 @@ export const RoomRepository = {
   delete: async (roomId: number): Promise<Room> => {
     return await prisma.room.delete({
       where: { id: roomId },
+    });
+  },
+
+  addGalleryImages: async (roomId: number, imageUrls: string[]) => {
+    const imageData = imageUrls.map(url => ({
+        roomId: roomId,
+        imageUrl: url,
+    }));
+
+    await prisma.roomImage.createMany({
+        data: imageData,
+    });
+
+    return prisma.room.findUnique({ 
+        where: { id: roomId }, 
+        include: { images: true } 
     });
   },
 };

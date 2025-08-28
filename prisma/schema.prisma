@@ -9,7 +9,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum UserRole { 
+enum UserRole {
   TENANT
   USER
 }
@@ -37,20 +37,21 @@ enum RoomCategory {
 enum TokenPurpose {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 model User {
-  id             Int        @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   role           UserRole
   fullName       String
-  email          String     @unique
+  email          String    @unique
   password       String?
   profilePicture String?
   provider       String?
   providerId     String?
-  verified       Boolean    @default(false)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  verified       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   tenant         Tenant?
   bookings       Booking[]
   reviews        Review[]
@@ -66,13 +67,28 @@ model Tenant {
   phoneNumberCompany String
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
-  user               User       @relation(fields: [userId], references: [id])
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   properties         Property[]
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  properties Property[]
+}
+
+model Amenity {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique 
+  properties Property[]
+}
+
+model City {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  provinsi   String
+  latitude   Float
+  longitude  Float
   properties Property[]
 }
 
@@ -82,28 +98,29 @@ model Property {
   name        String
   categoryId  Int
   description String
-  location    String
-  latitude    Float?   
-  longitude   Float?
-  provinsi    String
+  cityId      Int            
   zipCode     String
   mainImage   String?
   deletedAt   DateTime?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  city        City            @relation(fields: [cityId], references: [id])
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category    Category        @relation(fields: [categoryId], references: [id])
   images      PropertyImage[]
   rooms       Room[]
   bookings    Booking[]
   reviews     Review[]
+  amenities   Amenity[]
+  @@index([categoryId])
+  @@index([cityId])   
 }
 
 model PropertyImage {
-  id         Int    @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   propertyId Int
   imageUrl   String
-  property   Property @relation(fields: [propertyId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model Room {
@@ -118,7 +135,7 @@ model Room {
   basePrice      Float
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
-  property       Property           @relation(fields: [propertyId], references: [id])
+  property       Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   images         RoomImage[]
   availabilities RoomAvailability[]
   bookingRooms   BookingRoom[]
@@ -128,7 +145,7 @@ model RoomImage {
   id       Int    @id @default(autoincrement())
   roomId   Int
   imageUrl String
-  room     Room   @relation(fields: [roomId], references: [id])
+  room     Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model RoomAvailability {
@@ -139,7 +156,7 @@ model RoomAvailability {
   price       Float
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  room        Room     @relation(fields: [roomId], references: [id])
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   @@unique([roomId, date])
 }
 
@@ -156,7 +173,7 @@ model Booking {
   paymentProof    String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  user            User          @relation(fields: [userId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   property        Property      @relation(fields: [propertyId], references: [id])
   bookingRooms    BookingRoom[]
   review          Review?
@@ -172,22 +189,24 @@ model BookingRoom {
   totalPrice     Float
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  booking        Booking  @relation(fields: [bookingId], references: [id])
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   room           Room     @relation(fields: [roomId], references: [id])
 }
 
 model Review {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      Int
   propertyId  Int
-  bookingId   Int      @unique
-  comment     String
+  bookingId   Int       @unique
+  rating      Int
+  comment     String?
   tenantReply String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
-  property    Property @relation(fields: [propertyId], references: [id])
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  reply       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model Token {
@@ -197,5 +216,5 @@ model Token {
   expiresAt DateTime
   userId    Int
   createdAt DateTime     @default(now())
-  user      User         @relation(fields: [userId], references: [id])
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
