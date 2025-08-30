@@ -177,6 +177,9 @@ model Booking {
   checkIn         DateTime
   checkOut        DateTime
   totalPrice      Float
+  midtransOrderId String?
+  paymentToken    String?
+  paymentUrl      String?
   status          BookingStatus @default(MENUNGGU_PEMBAYARAN)
   paymentDeadline DateTime
   paymentProof    String?
